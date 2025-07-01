@@ -39,7 +39,7 @@ AS
 BEGIN
     -- Check if order exists
     IF NOT EXISTS (SELECT 1 FROM DATA_PIPELINE.ORDERS WHERE ORDER_ID = order_id) THEN
-        RETURN 'Error: Order not found';
+        RETURN ''Error: Order not found';
     END IF;
 
     -- Update the order record
@@ -49,6 +49,6 @@ BEGIN
         ORDER_DATE = new_order_date
     WHERE ORDER_ID = order_id;
 
-    RETURN 'Order updated successfully';
+    RETURN ''Order updated successfully'';
 END
 ;
