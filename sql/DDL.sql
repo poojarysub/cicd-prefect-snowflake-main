@@ -28,17 +28,13 @@ CREATE OR REPLACE TABLE DATA_PIPELINE.ORDERS (
 
 -- Create stored procedure to update order record
 CREATE OR REPLACE PROCEDURE DATA_PIPELINE.UPDATE_ORDER()
-RETURNS STRING
 LANGUAGE SQL
 AS
 '
 BEGIN
 
     -- Update the order record
-    UPDATE DATA_PIPELINE.ORDERS
-    SET 
-        QUANTITY = 1,
-    WHERE ORDER_ID = 2;
+
 
 END
 ';
