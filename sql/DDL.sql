@@ -33,9 +33,7 @@ LANGUAGE SQL
 AS
 '
 BEGIN
-
     -- Update the order record
-
-
+return ''success'';
 END
 ';
