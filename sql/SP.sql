@@ -2,13 +2,13 @@ CREATE OR REPLACE PROCEDURE return_sample_data()
 RETURNS TABLE (id INT, name STRING, created_at TIMESTAMP)
 LANGUAGE SQL
 AS
-BEGIN
-    SELECT 1, 'John Doe', CURRENT_TIMESTAMP()
-    UNION ALL
-    SELECT 2, 'Jane Smith', CURRENT_TIMESTAMP()
-    UNION ALL
-    SELECT 3, 'Bob Johnson', CURRENT_TIMESTAMP()
-END;
+$$
+SELECT 1, 'John Doe', CURRENT_TIMESTAMP()
+UNION ALL
+SELECT 2, 'Jane Smith', CURRENT_TIMESTAMP()
+UNION ALL
+SELECT 3, 'Bob Johnson', CURRENT_TIMESTAMP()
+$$;
 
 -- Example usage:
 -- CALL return_sample_data();
