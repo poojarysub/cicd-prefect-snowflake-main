@@ -25,30 +25,3 @@ CREATE OR REPLACE TABLE DATA_PIPELINE.ORDERS (
     FOREIGN KEY (CUSTOMER_ID) REFERENCES DATA_PIPELINE.CUSTOMERS(CUSTOMER_ID),
     FOREIGN KEY (PRODUCT_ID) REFERENCES DATA_PIPELINE.PRODUCTS(PRODUCT_ID)
 );
-
--- Create stored procedure to update order record
-CREATE OR REPLACE PROCEDURE DATA_PIPELINE.UPDATE_ORDER(
-    order_id INT,
-    new_quantity INT,
-    new_order_date DATE
-)
-RETURNS STRING
-LANGUAGE SQL
-AS
-'
-BEGIN
-    -- Check if order exists
-    IF NOT EXISTS (SELECT 1 FROM DATA_PIPELINE.ORDERS WHERE ORDER_ID = order_id) THEN
-        RETURN 'Error: Order not found';
-    END IF;
-
-    -- Update the order record
-    UPDATE DATA_PIPELINE.ORDERS
-    SET 
-        QUANTITY = new_quantity,
-        ORDER_DATE = new_order_date
-    WHERE ORDER_ID = order_id;
-
-    RETURN 'Order updated successfully';
-END
-;
