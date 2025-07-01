@@ -34,6 +34,6 @@ AS
 '
 BEGIN
     -- Update the order record
-return ''success'';
+return 1;
 END
 ';
