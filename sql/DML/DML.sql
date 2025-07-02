@@ -1,7 +1,7 @@
 -- Insert sample customers
 INSERT INTO DATA_PIPELINE.CUSTOMERS (CUSTOMER_ID, CUSTOMER_NAME, EMAIL) VALUES
 (1, 'Alice Johnson', 'alice@example.com'),
-(2, 'Bob Smith', 'bob@example.com'),
+(2, 'Bob Smith', 'raj@example.com'),
 (3, 'Carol Davis', 'carol@example.com');
 
 -- Insert sample products
