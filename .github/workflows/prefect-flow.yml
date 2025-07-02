@@ -1,66 +1,41 @@
-name: Prefect Snowflake CI/CD
+name: Snowflake SQL Deployment
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches: [main]
+    paths:
+      - 'sql/**'           # Trigger when SQL files are modified
+      - 'flows/**'         # Trigger when the Prefect flow changes
+  workflow_dispatch:       # Allow manual triggering from GitHub UI
+
+env:
+  PYTHON_VERSION: '3.10'
 
 jobs:
-  validate-sql:
-    name: Validate SQL Files
+  validate-and-deploy:
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        
-      - name: Validate SQL syntax
-        run: |
-          # This is a basic validation - you might want to add more specific checks
-          for sql_file in $(find sql -name '*.sql'); do
-            echo "Validating $sql_file"
-            # Check if file exists and is not empty
-            if [ ! -s "$sql_file" ]; then
-              echo "Error: $sql_file is empty"
-              exit 1
-            fi
-            # Simple syntax check (this is basic - consider using a proper SQL linter)
-            if ! grep -q ";" "$sql_file"; then
-              echo "Error: $sql_file appears to be missing SQL statement terminators (;)"
-              exit 1
-            fi
-          done
-
-  deploy:
-    name: Deploy to Snowflake
-    needs: validate-sql
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    
-    env:
-      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-      SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-      SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
+      
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
+    
+      - name: Run Prefect deployment flow
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
 
-      - name: Run Prefect flow
         run: python flows/main_flow.py
