@@ -1,1 +1,0 @@
-execute drop_all_tables();
