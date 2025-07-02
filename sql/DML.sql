@@ -7,8 +7,8 @@ INSERT INTO DATA_PIPELINE.CUSTOMERS (CUSTOMER_ID, CUSTOMER_NAME, EMAIL) VALUES
 -- Insert sample products
 INSERT INTO DATA_PIPELINE.PRODUCTS (PRODUCT_ID, PRODUCT_NAME, PRICE) VALUES
 (101, 'Laptop', 1299.99),
-(102, 'Smartphone', 799.49),
-(103, 'Smartphone', 899.49),
+(102, 'Smartphone 1', 799.49),
+(103, 'Smartphone 2', 899.49),
 (104, 'Monitor', 249.89);
 
 -- Insert sample orders
