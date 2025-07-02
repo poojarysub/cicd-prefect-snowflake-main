@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from typing import List, Tuple, Union, Dict, Any
 from collections import defaultdict
 from functools import total_ordering
-from prefect import flow, task
+from prefect import flow, task, get_run_logger
 import snowflake.connector
 
 # Load environment variables
