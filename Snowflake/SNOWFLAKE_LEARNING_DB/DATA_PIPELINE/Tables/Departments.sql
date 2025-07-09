@@ -6,4 +6,5 @@ CREATE OR REPLACE TABLE Departments (
 INSERT INTO Departments (Department_ID, Department_Name) VALUES
 (101, 'Engineering'),
 (102, 'Marketing'),
-(103, 'Human Resources');
+(103, 'Human Resources'),
+(104, 'Finance');
