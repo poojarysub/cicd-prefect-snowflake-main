@@ -1,0 +1,36 @@
+name: Auto Tag on Push to CI Branch
+
+on:
+  push:
+    branches:
+      - cicd-sql-release  # ✅ Only triggers on this branch
+
+permissions:
+  contents: write
+
+jobs:
+  tag-latest-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Generate timestamp tag and push
+        run: |
+          TAG="LastCommit-$(date +'%Y-%m-%d-%H%M%S')"
+          echo "Generated tag: $TAG"
+
+          # Prevent duplicate tags
+          if git tag | grep -q "$TAG"; then
+            echo "⚠️ Tag $TAG already exists. Skipping."
+            exit 0
+          fi
+
+          git tag -a "$TAG" -m "🔖 Auto tag for $TAG"
+          git push origin "$TAG"

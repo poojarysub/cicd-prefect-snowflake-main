@@ -1,0 +1,68 @@
+name: Deploy SQL to Snowflake
+
+on:
+    release:
+      types: [published]
+    workflow_dispatch:
+
+jobs:
+  deploy-sql:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: cicd-sql-release
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Get Latest Release Tag
+        id: get_release
+        run: |
+          echo "RELEASE_TAG=$(curl -s -H "Authorization: token ${{ secrets.HUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)" >> $GITHUB_ENV
+
+      - name: Extract SQL Paths from Latest Release Notes
+        id: extract_sql
+        run: |
+          curl -s -H "Authorization: token ${{ secrets.HUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/releases/tags/${RELEASE_TAG} \
+          | jq -r '.body' > release_notes.md
+
+          echo "📝 Extracting modified SQL files:"
+          grep -oP 'Snowflake/[^\s]*\.sql' release_notes.md > modified_sql_files.txt || true
+          cat modified_sql_files.txt
+
+      - name: Sort SQL Files by Type
+        id: sort_sql
+        run: |
+          echo "📋 Sorting modified files by type..."
+
+          grep "/Tables/" modified_sql_files.txt > sorted_sql.txt || true
+          grep "/Procedures/" modified_sql_files.txt >> sorted_sql.txt || true
+          grep "/Views/" modified_sql_files.txt >> sorted_sql.txt || true
+          grep "/Triggers/" modified_sql_files.txt >> sorted_sql.txt || true
+
+          echo "🔄 Final execution order:"
+          cat sorted_sql.txt
+
+      - name: Run Prefect Flow
+        run: python flows/main_flow.py --release-notes sorted_sql.txt
+        env:
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        
