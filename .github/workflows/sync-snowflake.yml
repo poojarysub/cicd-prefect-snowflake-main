@@ -38,7 +38,7 @@ jobs:
       run: |
         python scripts/extract_ddls.py
 
-    - name: Push Changes to GitHub
+    - name: 📤 Push Changes to GitHub
       env:
         HUB_TOKEN: ${{ secrets.HUB_TOKEN }}
       run: |
@@ -47,4 +47,3 @@ jobs:
         git add .
         git diff-index --quiet HEAD || git commit -m "Auto-sync: Snowflake DDLs and Data"
         git push https://x-access-token:${HUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:main
-      
