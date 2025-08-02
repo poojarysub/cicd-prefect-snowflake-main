@@ -47,13 +47,41 @@ def get_objects(schema, object_key):
         """)
     elif object_key == "PROCEDURES":
         cursor.execute(f"""
-            SELECT PROCEDURE_NAME FROM {SNOWFLAKE_DATABASE}.INFORMATION_SCHEMA.PROCEDURES
+            SELECT PROCEDURE_NAME
+            FROM {SNOWFLAKE_DATABASE}.INFORMATION_SCHEMA.PROCEDURES
             WHERE PROCEDURE_SCHEMA = '{schema}'
         """)
+    # this already gives the correct case name — so just ensure you DO NOT force .upper() in your filename or full_name
     else:
         raise ValueError(f"Unsupported object type: {object_key}")
 
     return [row[0] for row in cursor.fetchall()]
+
+# Define common Snowflake SQL keywords to convert to uppercase
+KEYWORDS = [
+    "create or replace", "create", "replace", "table", "view", "as", "select",
+    "insert into", "values", "from", "join", "on", "group by", "order by",
+    "primary key", "foreign key", "references", "not null", "null", "number",
+    "varchar", "date"
+]
+
+import sqlparse
+from sqlparse.tokens import Keyword, DML
+
+def normalize_keywords(sql: str) -> str:
+    parsed = sqlparse.parse(sql)
+    formatted = []
+
+    for stmt in parsed:
+        tokens = stmt.flatten()  # flattens nested token trees into a list
+        for token in tokens:
+            if token.ttype in Keyword or token.ttype in DML:
+                formatted.append(token.value.upper())  # Only change keywords
+            else:
+                formatted.append(token.value)  # Leave everything else as-is
+    
+    return ''.join(formatted)
+
 
 def export_ddl(schema, object_key, name):
     folder_name = OBJECT_MAP[object_key]["folder"]
@@ -68,20 +96,34 @@ def export_ddl(schema, object_key, name):
     os.makedirs(out_path, exist_ok=True)
 
     file_path = os.path.join(out_path, f"{name.upper()}.sql")
-    full_name = f"{SNOWFLAKE_DATABASE}.{schema}.{name}"
+
+    # Unquoted full name for clean DDL: DB.SCHEMA.OBJECT
+    # Always double quote name to preserve case for case-sensitive objects
+    quoted_name = f'"{name}"'
+    simple_name = f'{SNOWFLAKE_DATABASE}.{schema}.{quoted_name}'
     if object_key == "PROCEDURES":
-        full_name += "()"  # Required for procedures
+        simple_name += "()"  # include () for parameterless procedures
 
     try:
-        cursor.execute(f"SELECT GET_DDL('{snowflake_type}', '{full_name}')")
+        # Get exact DDL with full qualification (no quotes)
+        cursor.execute(f"SELECT GET_DDL('{snowflake_type}', '{simple_name}', true)")
         ddl = cursor.fetchone()[0]
 
-        with open(file_path, "w") as f:
-            f.write(ddl + ";\n\n")
+        # Strip trailing semicolons/whitespace
+        ddl = ddl.strip().rstrip(";")
 
-        print(f"✅ Exported {snowflake_type} {full_name}")
+        # Optional: normalize keywords to uppercase
+        ddl = normalize_keywords(ddl)
+
+        # Write to file
+        with open(file_path, "w") as f:
+            f.write(ddl + ";\n")
+
+        print(f"✅ Exported {snowflake_type} {simple_name} to {file_path}")
     except Exception as e:
-        print(f"❌ Failed to export {snowflake_type} {full_name}: {e}")
+        print(f"❌ Failed to export {snowflake_type} {simple_name}: {e}")
+
+
 
 def main():
     for schema in get_schemas():
